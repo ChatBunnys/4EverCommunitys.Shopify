@@ -15,6 +15,7 @@ let ageCookie = '';
 let authToken = '';
 
 function resetStore() {
+  fs.writeFileSync(tmpStore, JSON.stringify({ users: [], subscriptions: [], purchases: [], auditEvents: [] }, null, 2));
   fs.writeFileSync(tmpStore, JSON.stringify({ users: [], subscriptions: [], purchases: [] }, null, 2));
 }
 
@@ -105,4 +106,14 @@ test('session expiry is enforced', async () => {
 
   assert.equal(meExpired.response.status, 401);
   assert.equal(meExpired.data.error, 'Session expired.');
+});
+
+
+test('audit log endpoint returns user events', async () => {
+  const eventsRes = await jfetch(`${baseUrl}/api/audit/me`, {
+    headers: { Cookie: ageCookie, Authorization: `Bearer ${authToken}` }
+  });
+
+  assert.equal(eventsRes.response.status, 200);
+  assert.equal(Array.isArray(eventsRes.data), true);
 });

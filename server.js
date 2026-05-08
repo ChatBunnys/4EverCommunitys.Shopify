@@ -24,17 +24,29 @@ function ensureDataFile(filePath) {
   const dir = path.dirname(filePath);
   if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
   if (!fs.existsSync(filePath)) {
+    fs.writeFileSync(filePath, JSON.stringify({ users: [], subscriptions: [], purchases: [], auditEvents: [] }, null, 2));
     fs.writeFileSync(filePath, JSON.stringify({ users: [], subscriptions: [], purchases: [] }, null, 2));
   }
 }
 
 function readState(filePath) {
   ensureDataFile(filePath);
+  const state = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+  state.auditEvents = state.auditEvents || [];
+  return state;
   return JSON.parse(fs.readFileSync(filePath, 'utf8'));
 }
 
 function writeState(filePath, state) {
   fs.writeFileSync(filePath, JSON.stringify(state, null, 2));
+}
+
+
+function logAuditEvent(event) {
+  const state = readState(DATA_FILE);
+  state.auditEvents.push({ id: `evt_${crypto.randomUUID()}`, at: new Date().toISOString(), ...event });
+  if (state.auditEvents.length > 5000) state.auditEvents = state.auditEvents.slice(-5000);
+  writeState(DATA_FILE, state);
 }
 
 function parseCookies(req) {
@@ -75,6 +87,7 @@ function verifyPassword(password, storedHash) {
 function createApp() {
   const app = express();
   const sessions = new Map();
+  const authRateLimit = new Map();
 
   app.use(express.json());
   app.use(express.static(path.join(__dirname, 'public')));
@@ -125,6 +138,23 @@ function createApp() {
     });
   });
 
+
+  function checkAuthRateLimit(req, res, next) {
+    const ip = req.ip || req.connection?.remoteAddress || 'unknown';
+    const now = Date.now();
+    const windowMs = 60_000;
+    const limit = 20;
+    const key = `${ip}:${req.path}`;
+    const bucket = authRateLimit.get(key) || [];
+    const recent = bucket.filter((t) => now - t < windowMs);
+    if (recent.length >= limit) {
+      return res.status(429).json({ error: 'Too many requests. Please retry in a minute.' });
+    }
+    recent.push(now);
+    authRateLimit.set(key, recent);
+    return next();
+  }
+
   app.post('/api/age-verify', (req, res) => {
     if (req.body?.isAdult !== true) return res.status(400).json({ error: 'User must explicitly confirm age >= 18.' });
     const cookieValue = `${AGE_COOKIE_VALUE}.${getAgeCookieSignature(AGE_COOKIE_VALUE)}`;
@@ -132,6 +162,7 @@ function createApp() {
     return res.json({ verified: true });
   });
 
+  app.post('/api/auth/register', checkAuthRateLimit, requireAgeVerification, (req, res) => {
   app.post('/api/auth/register', requireAgeVerification, (req, res) => {
     const { email, password } = req.body || {};
     if (!email || !password || password.length < 8) return res.status(400).json({ error: 'Email and password (8+ chars) are required.' });
@@ -143,6 +174,11 @@ function createApp() {
     const user = { id: `u_${crypto.randomUUID()}`, email: String(email).toLowerCase(), passwordHash: hashPassword(password), createdAt: new Date().toISOString() };
     state.users.push(user);
     writeState(DATA_FILE, state);
+    logAuditEvent({ type: 'auth.register', userId: user.id, email: user.email });
+    return res.status(201).json({ id: user.id, email: user.email });
+  });
+
+  app.post('/api/auth/login', checkAuthRateLimit, requireAgeVerification, (req, res) => {
     return res.status(201).json({ id: user.id, email: user.email });
   });
 
@@ -157,11 +193,13 @@ function createApp() {
 
     const token = crypto.randomBytes(24).toString('hex');
     sessions.set(token, { userId: user.id, expiresAt: Date.now() + SESSION_TTL_MS });
+    logAuditEvent({ type: 'auth.login', userId: user.id, email: user.email });
     return res.json({ token, user: { id: user.id, email: user.email } });
   });
 
   app.post('/api/auth/logout', requireAuth, (req, res) => {
     sessions.delete(req.token);
+    logAuditEvent({ type: 'auth.logout', userId: req.user.id, email: req.user.email });
     res.json({ success: true });
   });
 
@@ -183,6 +221,7 @@ function createApp() {
 
     state.subscriptions.push({ id: `sub_${crypto.randomUUID()}`, userId: req.user.id, planId: plan.id, status: 'active', startedAt: new Date().toISOString() });
     writeState(DATA_FILE, state);
+    logAuditEvent({ type: 'subscription.activate', userId: req.user.id, planId: plan.id });
 
     return res.json({ status: 'active', plan });
   });
@@ -201,6 +240,7 @@ function createApp() {
     const state = readState(DATA_FILE);
     state.purchases.push({ id: `ppv_${crypto.randomUUID()}`, userId: req.user.id, streamId, status: 'paid', amountUsd: stream.ppvPriceUsd, paidAt: new Date().toISOString() });
     writeState(DATA_FILE, state);
+    logAuditEvent({ type: 'ppv.purchase', userId: req.user.id, streamId, amountUsd: stream.ppvPriceUsd });
 
     return res.json({ status: 'paid', amountUsd: stream.ppvPriceUsd, message: 'PPV purchase completed (mock).' });
   });
@@ -213,6 +253,16 @@ function createApp() {
     if (!entitled) return res.status(403).json({ error: 'Access denied. Active subscription or PPV purchase required.' });
 
     return res.json({ id: stream.id, title: stream.title, playbackUrl: stream.playbackUrl });
+  });
+
+
+  app.get('/api/audit/me', requireAgeVerification, requireAuth, (req, res) => {
+    const state = readState(DATA_FILE);
+    const events = state.auditEvents
+      .filter((event) => event.userId === req.user.id || event.email === req.user.email)
+      .slice(-100)
+      .reverse();
+    res.json(events);
   });
 
   app.get('*', (_, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));

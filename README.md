@@ -12,6 +12,8 @@ This repository contains an adults-only (18+) streaming-only MVP with server-ver
 
 - Password hashing upgraded from simple hash to `pbkdf2` with per-user salt.
 - Session tokens now include TTL-based expiry checks.
+- Added lightweight auth-route rate limiting for register/login endpoints.
+- Added per-user audit event logging and a `GET /api/audit/me` endpoint for recent account events.
 - User/subscription/purchase data now persists to `data/store.json`.
 - Added automated API tests (`node --test`) for auth, entitlement checks, and session expiry.
 
@@ -39,6 +41,7 @@ Open `http://localhost:3000`.
 ## API (summary)
 
 - Public-ish: `GET /api/health`, `GET /api/config`, `POST /api/age-verify`
+- Requires age + auth: `GET /api/streams`, `GET /api/streams/:id/playback`, `GET /api/subscription-plans`, `POST /api/subscriptions/activate`, `POST /api/purchase-ppv`, `GET /api/auth/me`, `GET /api/audit/me`
 - Requires age + auth: `GET /api/streams`, `GET /api/streams/:id/playback`, `GET /api/subscription-plans`, `POST /api/subscriptions/activate`, `POST /api/purchase-ppv`, `GET /api/auth/me`
 
 ## Testing
