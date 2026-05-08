@@ -25,6 +25,7 @@ function ensureDataFile(filePath) {
   if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
   if (!fs.existsSync(filePath)) {
     fs.writeFileSync(filePath, JSON.stringify({ users: [], subscriptions: [], purchases: [], auditEvents: [] }, null, 2));
+    fs.writeFileSync(filePath, JSON.stringify({ users: [], subscriptions: [], purchases: [] }, null, 2));
   }
 }
 
@@ -33,6 +34,7 @@ function readState(filePath) {
   const state = JSON.parse(fs.readFileSync(filePath, 'utf8'));
   state.auditEvents = state.auditEvents || [];
   return state;
+  return JSON.parse(fs.readFileSync(filePath, 'utf8'));
 }
 
 function writeState(filePath, state) {
@@ -161,6 +163,7 @@ function createApp() {
   });
 
   app.post('/api/auth/register', checkAuthRateLimit, requireAgeVerification, (req, res) => {
+  app.post('/api/auth/register', requireAgeVerification, (req, res) => {
     const { email, password } = req.body || {};
     if (!email || !password || password.length < 8) return res.status(400).json({ error: 'Email and password (8+ chars) are required.' });
 
@@ -176,6 +179,10 @@ function createApp() {
   });
 
   app.post('/api/auth/login', checkAuthRateLimit, requireAgeVerification, (req, res) => {
+    return res.status(201).json({ id: user.id, email: user.email });
+  });
+
+  app.post('/api/auth/login', requireAgeVerification, (req, res) => {
     const { email, password } = req.body || {};
     const state = readState(DATA_FILE);
     const user = state.users.find((u) => u.email === String(email).toLowerCase());

@@ -42,6 +42,7 @@ Open `http://localhost:3000`.
 
 - Public-ish: `GET /api/health`, `GET /api/config`, `POST /api/age-verify`
 - Requires age + auth: `GET /api/streams`, `GET /api/streams/:id/playback`, `GET /api/subscription-plans`, `POST /api/subscriptions/activate`, `POST /api/purchase-ppv`, `GET /api/auth/me`, `GET /api/audit/me`
+- Requires age + auth: `GET /api/streams`, `GET /api/streams/:id/playback`, `GET /api/subscription-plans`, `POST /api/subscriptions/activate`, `POST /api/purchase-ppv`, `GET /api/auth/me`
 
 ## Testing
 

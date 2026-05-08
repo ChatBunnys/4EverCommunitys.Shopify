@@ -16,6 +16,7 @@ let authToken = '';
 
 function resetStore() {
   fs.writeFileSync(tmpStore, JSON.stringify({ users: [], subscriptions: [], purchases: [], auditEvents: [] }, null, 2));
+  fs.writeFileSync(tmpStore, JSON.stringify({ users: [], subscriptions: [], purchases: [] }, null, 2));
 }
 
 async function jfetch(url, options = {}) {
