@@ -1,0 +1,100 @@
+:root {
+  --bg: #f8fafc;
+  --card: #ffffff;
+  --text: #172033;
+  --accent: #4f46e5;
+  --good: #15803d;
+  --bad: #b91c1c;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  background: radial-gradient(circle at top, #e0e7ff, var(--bg));
+  color: var(--text);
+}
+
+.app {
+  max-width: 840px;
+  margin: 0 auto;
+  padding: 2rem 1rem 4rem;
+}
+
+header h1 { margin-bottom: 0.3rem; }
+
+.controls,
+.game-card,
+.status {
+  background: var(--card);
+  border-radius: 14px;
+  padding: 1rem;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.09);
+  margin-top: 1rem;
+}
+
+.controls {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 0.8rem;
+  align-items: end;
+}
+
+label { display: grid; gap: 0.3rem; font-weight: 600; }
+input, select, button {
+  border-radius: 10px;
+  border: 1px solid #cbd5e1;
+  padding: 0.65rem;
+  font-size: 1rem;
+}
+button {
+  background: var(--accent);
+  color: white;
+  border: none;
+  cursor: pointer;
+}
+button:hover { filter: brightness(1.08); }
+
+.hidden { display: none; }
+
+.meta-row,
+.footer-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+}
+
+#modeBadge,
+#difficultyBadge {
+  background: #eef2ff;
+  color: #3730a3;
+  border-radius: 999px;
+  padding: 0.3rem 0.7rem;
+  font-size: 0.88rem;
+  font-weight: 700;
+}
+
+.options {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 0.7rem;
+  margin-top: 1rem;
+}
+
+.option-btn.correct { background: var(--good); }
+.option-btn.wrong { background: var(--bad); }
+
+.prompt-visual {
+  min-height: 90px;
+  display: grid;
+  place-items: center;
+  border: 2px dashed #cbd5e1;
+  border-radius: 12px;
+  margin-top: 0.8rem;
+  font-size: 1.5rem;
+}
+
+.divider { padding: 0 0.4rem; color: #64748b; }

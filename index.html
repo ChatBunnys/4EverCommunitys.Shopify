@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Kid Learning Arcade</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="app">
+      <header>
+        <h1>Kid Learning Arcade</h1>
+        <p>
+          Learn colors, numbers, and shapes in many languages. The game adapts and builds
+          harder levels based on each child’s score.
+        </p>
+      </header>
+
+      <section class="controls">
+        <label>
+          Child Name
+          <input id="childName" placeholder="Ava" maxlength="24" />
+        </label>
+
+        <label>
+          Language
+          <select id="languageSelect"></select>
+        </label>
+
+        <button id="startBtn">Start Learning Game</button>
+      </section>
+
+      <section id="status" class="status hidden"></section>
+
+      <section id="gameCard" class="game-card hidden">
+        <div class="meta-row">
+          <span id="modeBadge"></span>
+          <span id="difficultyBadge"></span>
+        </div>
+
+        <h2 id="question"></h2>
+        <div id="promptVisual" class="prompt-visual"></div>
+
+        <div id="options" class="options"></div>
+
+        <div class="footer-row">
+          <button id="speakBtn" type="button">🔊 Speak</button>
+          <div>
+            <strong>Score:</strong> <span id="score">0</span>
+            <span class="divider">•</span>
+            <strong>Round:</strong> <span id="round">0</span>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <script src="app.js"></script>
+  </body>
+</html>
